@@ -1,0 +1,382 @@
+openapi: 3.1.0
+info:
+  title: 郵便番号・町字API
+  version: 1.0.0
+  description: |
+    郵便番号・町字APIは、郵便番号と町字IDの相互変換を行うAPI。
+    アドレス・ベース・レジストリのデータを利用する。
+
+    ## レスポンス設計
+
+    | シナリオ | HTTPステータス | レスポンス |
+    |----------|---------------|-----------|
+    | データあり | 200 | JSONデータ |
+    | 該当データなし | 404 | `{"error": "..."}` |
+    | フォーマット不正 | 400 | `{"error": "..."}` |
+servers:
+  - url: http://localhost:8080/
+paths:
+  "/post_code/{post_code}":
+    get:
+      summary: 郵便番号から町字IDを取得
+      description: 郵便番号に対応する町字IDのリストを取得する。
+      operationId: getAddressByPostCode
+      parameters:
+        - name: post_code
+          in: path
+          required: true
+          description: 郵便番号（7桁、ハイフンなし）
+          schema:
+            type: string
+            pattern: '^\d{7}$'
+            example: "1000001"
+      responses:
+        "200":
+          description: 町字ID取得成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PostCodeResponse"
+              example:
+                - post_code: "1000001"
+                  lg_code: "131016"
+                  machiaza_id: "0006000"
+                  pref: "東京都"
+                  county: ""
+                  city: "千代田区"
+                  ward: ""
+                  kyoto_st: ""
+                  oaza_cho: "千代田"
+                  chome: ""
+                  koaza: ""
+                  machiaza_dist: ""
+        "400":
+          $ref: "#/components/responses/badRequest"
+        "404":
+          $ref: "#/components/responses/notFound"
+
+  "/lg_code/{lg_code}":
+    get:
+      summary: 市区町村情報を取得
+      description: 全国地方公共団体コードに対応する市区町村情報を取得する。
+      operationId: getCityByLgCode
+      parameters:
+        - name: lg_code
+          in: path
+          required: true
+          description: 全国地方公共団体コード（6桁）
+          schema:
+            type: string
+            pattern: '^\d{6}$'
+            example: "131016"
+      responses:
+        "200":
+          description: 市区町村情報取得成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/City"
+              example:
+                lg_code: "131016"
+                pref: "東京都"
+                county: ""
+                city: "千代田区"
+                ward: ""
+        "400":
+          $ref: "#/components/responses/badRequest"
+        "404":
+          $ref: "#/components/responses/notFound"
+
+  "/machiaza/{lg_code}/{machiaza_id}":
+    get:
+      summary: 町字IDから郵便番号を取得
+      description: 町字IDから、対応する郵便番号のリストを取得する。
+      operationId: getAddressByMachiaza
+      parameters:
+        - name: lg_code
+          in: path
+          required: true
+          description: 全国地方公共団体コード（6桁）
+          schema:
+            type: string
+            pattern: '^\d{6}$'
+            example: "131016"
+        - name: machiaza_id
+          in: path
+          required: true
+          description: 町字ID（7桁）
+          schema:
+            type: string
+            pattern: '^\d{7}$'
+            example: "0001001"
+      responses:
+        "200":
+          description: 郵便番号取得成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MachiazaResponse"
+              examples:
+                found:
+                  summary: 郵便番号が見つかった場合
+                  value:
+                    lg_code: "131016"
+                    machiaza_id: "0001001"
+                    kyoto_st: ""
+                    oaza_cho: "内幸町"
+                    chome: "一丁目"
+                    koaza: ""
+                    machiaza_dist: ""
+                    pref: "東京都"
+                    county: ""
+                    city: "千代田区"
+                    ward: ""
+                    post_codes:
+                      - "1000011"
+                found_kyoto:
+                  summary: 京都通り名を含む住所の場合
+                  value:
+                    lg_code: "261025"
+                    machiaza_id: "0087101"
+                    kyoto_st: "上御霊鳥居前通鞍馬口下る"
+                    oaza_cho: "上御霊竪町"
+                    chome: ""
+                    koaza: ""
+                    machiaza_dist: ""
+                    pref: "京都府"
+                    county: ""
+                    city: "京都市"
+                    ward: "上京区"
+                    post_codes:
+                      - "6020896"
+        "400":
+          $ref: "#/components/responses/badRequest"
+        "404":
+          $ref: "#/components/responses/notFound"
+
+  "/health":
+    get:
+      summary: ヘルスチェック
+      description: サーバーの稼働状態を確認する。
+      operationId: healthCheck
+      responses:
+        "200":
+          description: サーバー正常稼働
+          headers:
+            X-App-Version:
+              $ref: "#/components/headers/X-App-Version"
+            X-Data-Modified:
+              $ref: "#/components/headers/X-Data-Modified"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+              example:
+                status: "ok"
+
+components:
+  headers:
+    X-App-Version:
+      description: アプリケーションのバージョン
+      schema:
+        type: string
+        example: "1.0.0"
+    X-Data-Modified:
+      description: |
+        ABR データの最終更新日時（DCAT Feed の modified）。
+        データ未取得時はヘッダ自体が省略される。
+      schema:
+        type: string
+        format: date-time
+        example: "2026-06-22T07:51:06.000Z"
+  schemas:
+    City:
+      type: object
+      description: 市区町村情報
+      properties:
+        lg_code:
+          type: string
+          description: 全国地方公共団体コード
+          example: "131016"
+        pref:
+          type: string
+          description: 都道府県名
+          example: "東京都"
+        county:
+          type: string
+          description: 郡名
+          example: ""
+        city:
+          type: string
+          description: 市区町村名
+          example: "千代田区"
+        ward:
+          type: string
+          description: 政令市区名
+          example: ""
+
+    PostCodeResponse:
+      type: object
+      description: 郵便番号と住所のマッピング情報
+      properties:
+        post_code:
+          type: string
+          description: 郵便番号
+          example: "1000001"
+        lg_code:
+          type: string
+          description: 全国地方公共団体コード
+          example: "131016"
+        machiaza_id:
+          type: string
+          description: 町字ID
+          example: "0006000"
+        pref:
+          type: string
+          description: 都道府県名
+          example: "東京都"
+        county:
+          type: string
+          description: 郡名
+          example: ""
+        city:
+          type: string
+          description: 市区町村名
+          example: "千代田区"
+        ward:
+          type: string
+          description: 政令市区名
+          example: ""
+        kyoto_st:
+          type: string
+          description: 京都通り名
+          example: ""
+        oaza_cho:
+          type: string
+          description: 大字・町名
+          example: "千代田"
+        chome:
+          type: string
+          description: 丁目
+          example: ""
+        koaza:
+          type: string
+          description: 小字
+          example: ""
+        machiaza_dist:
+          type: string
+          description: 同一町字識別情報
+          example: ""
+
+    MachiazaResponse:
+      type: object
+      description: 町字情報と郵便番号
+      properties:
+        lg_code:
+          type: string
+          description: 全国地方公共団体コード
+          example: "131016"
+        machiaza_id:
+          type: string
+          description: 町字ID
+          example: "0001001"
+        kyoto_st:
+          type: string
+          description: 京都通り名
+          example: ""
+        oaza_cho:
+          type: string
+          description: 大字・町名
+          example: "内幸町"
+        chome:
+          type: string
+          description: 丁目
+          example: "一丁目"
+        koaza:
+          type: string
+          description: 小字
+          example: ""
+        machiaza_dist:
+          type: string
+          description: 同一町字識別情報
+          example: ""
+        pref:
+          type: string
+          description: 都道府県名
+          example: "東京都"
+        county:
+          type: string
+          description: 郡名
+          example: ""
+        city:
+          type: string
+          description: 市区町村名
+          example: "千代田区"
+        ward:
+          type: string
+          description: 政令市区名
+          example: ""
+        post_codes:
+          type: array
+          description: 対応する郵便番号のリスト（ソート済み）
+          items:
+            type: string
+          example:
+            - "1000011"
+
+  responses:
+    badRequest:
+      description: リクエストに問題あり
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                description: エラーメッセージ
+                example: "Invalid post_code format"
+          examples:
+            invalid_post_code:
+              summary: 郵便番号フォーマット不正
+              value:
+                error: "Invalid post_code format"
+            invalid_lg_code:
+              summary: 全国地方公共団体コードフォーマット不正
+              value:
+                error: "Invalid lg_code format"
+            invalid_machiaza_id:
+              summary: 町字IDフォーマット不正
+              value:
+                error: "Invalid machiaza_id format"
+
+    notFound:
+      description: 該当するデータなし
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                description: エラーメッセージ
+                example: "lg_code not found"
+          examples:
+            post_code_not_found:
+              summary: 郵便番号に対応する住所が見つからない場合
+              value:
+                error: "post_code not found"
+            lg_code_not_found:
+              summary: 市区町村情報が見つからない場合
+              value:
+                error: "lg_code not found"
+            machiaza_not_found:
+              summary: 町字情報が見つからない場合
+              value:
+                error: "machiaza not found"

@@ -1,0 +1,26 @@
+{
+  "name": "abrp-dev",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "moby": false
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      },
+      "extensions": [
+        "golang.go",
+        "janisdd.vscode-edit-csv",
+        "mechatroner.rainbow-csv"
+      ]
+    }
+  },
+  "forwardPorts": [
+    8080
+  ]
+}

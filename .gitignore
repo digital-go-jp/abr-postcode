@@ -1,0 +1,27 @@
+# OS
+.DS_Store
+
+# Build artifacts
+abrp
+.env
+
+# ABR data (regenerate with: ./abrp import)
+abr_post_code.zip
+abr_post_code.csv
+city.csv
+town.csv
+post_code_mapping.csv
+data_modified.txt
+metadata.txt
+
+# Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.backup
+*.tfplan
+tfplan*.tfstate.json
+tfplan
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
