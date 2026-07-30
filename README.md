@@ -2,11 +2,11 @@
 
 [日本語](README.ja.md)
 
-A REST API that converts between Japanese postal codes and machiaza IDs (town/block
+A REST API that converts between Japanese postcodes and machiaza IDs (town/block
 identifiers), backed by the Address Base Registry (ABR) maintained by the Digital
 Agency of Japan.
 
-> **Note:** Postal codes assigned to individual business offices are not included.
+> **Note:** Postcodes assigned to individual business offices are not included.
 
 ## Quick Start
 
@@ -27,9 +27,9 @@ modification timestamp has not changed since the last run.
 | Endpoint | Description |
 |----------|-------------|
 | `/health` | Health check |
-| `/post_code/:post_code` | Machiaza IDs for a postal code |
+| `/post_code/:post_code` | Machiaza IDs for a postcode |
 | `/lg_code/:lg_code` | Municipality for a local government code |
-| `/machiaza/:lg_code/:machiaza_id` | Postal codes for a machiaza ID |
+| `/machiaza/:lg_code/:machiaza_id` | Postcodes for a machiaza ID |
 
 A machiaza ID is only unique within a municipality, so `/machiaza` takes it together
 with an `lg_code`.
@@ -38,7 +38,7 @@ When no data matches, the API returns 404; when a parameter is malformed, 400.
 Both carry a body of `{"error": "..."}`.
 
 ```bash
-# postal code -> machiaza ID
+# postcode -> machiaza ID
 $ curl -s http://localhost:8080/post_code/1000001 | jq
 [
   {
@@ -57,7 +57,7 @@ $ curl -s http://localhost:8080/post_code/1000001 | jq
   }
 ]
 
-# machiaza ID -> postal codes
+# machiaza ID -> postcodes
 $ curl http://localhost:8080/machiaza/131016/0006000
 {"lg_code":"131016","machiaza_id":"0006000","pref":"東京都","county":"","city":"千代田区","ward":"","kyoto_st":"","oaza_cho":"千代田","chome":"","koaza":"","machiaza_dist":"","post_codes":["1000001"]}
 
