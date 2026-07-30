@@ -1,0 +1,41 @@
+# Git
+.git
+.gitignore
+
+# IDE / Editor
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+
+# Development
+.devcontainer
+.env
+.env.*
+
+# Built binaries
+abrp
+
+# Test and coverage
+*.test
+coverage.out
+coverage.html
+
+# Development data
+data/
+*.csv
+*.zip
+
+# Documentation
+*.md
+docs/
+
+# Terraform
+**/.terraform/
+**/.terraform.lock.hcl
+**/terraform.tfstate
+**/terraform.tfstate.backup
+**/tfplan
